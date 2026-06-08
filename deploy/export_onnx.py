@@ -85,7 +85,7 @@ def parse_args():
 
 
 def build_model_from_cfg(config_path, checkpoint_path, device):
-    model = init_detector(config_path, checkpoint_path, device=device)
+    model = init_detector(config_path, checkpoint_path, device=device, palette='coco')
     model.eval()
     return model
 
@@ -145,36 +145,36 @@ def main():
         args.work_dir,
         os.path.basename(args.checkpoint).replace('pth', 'onnx'))
     # export onnx
-    with BytesIO() as f:
-        torch.onnx.export(deploy_model,
-                          fake_input,
-                          f,
-                          input_names=['images'],
-                          output_names=output_names,
-                          opset_version=args.opset)
-        f.seek(0)
-        onnx_model = onnx.load(f)
-        onnx.checker.check_model(onnx_model)
+    torch.onnx.export(deploy_model,
+                      fake_input,
+                      save_onnx_path,
+                      input_names=['images'],
+                      output_names=output_names,
+                      opset_version=args.opset)
+    onnx_model = onnx.load(save_onnx_path)
+    onnx.checker.check_model(onnx_model)
 
-        # Fix tensorrt onnx output shape, just for view
-        if not args.model_only and not args.without_nms and backend in (
-                MMYOLOBackend.TENSORRT8, MMYOLOBackend.TENSORRT7):
-            shapes = [
-                args.batch_size, 1, args.batch_size, args.keep_topk, 4,
-                args.batch_size, args.keep_topk, args.batch_size,
-                args.keep_topk
-            ]
-            for i in onnx_model.graph.output:
-                for j in i.type.tensor_type.shape.dim:
-                    j.dim_param = str(shapes.pop(0))
+    # Fix tensorrt onnx output shape, just for view
+    if not args.model_only and not args.without_nms and backend in (
+            MMYOLOBackend.TENSORRT8, MMYOLOBackend.TENSORRT7):
+        shapes = [
+            args.batch_size, 1, args.batch_size, args.keep_topk, 4,
+            args.batch_size, args.keep_topk, args.batch_size,
+            args.keep_topk
+        ]
+        for i in onnx_model.graph.output:
+            for j in i.type.tensor_type.shape.dim:
+                j.dim_param = str(shapes.pop(0))
+        onnx.save(onnx_model, save_onnx_path)
+
     if args.simplify:
         try:
             import onnxsim
             onnx_model, check = onnxsim.simplify(onnx_model)
             assert check, 'assert check failed'
+            onnx.save(onnx_model, save_onnx_path)
         except Exception as e:
             print_log(f'Simplify failure: {e}')
-    onnx.save(onnx_model, save_onnx_path)
     print_log(f'ONNX export success, save into {save_onnx_path}')
 
 

@@ -58,7 +58,7 @@ class YOLOWorldDetector(YOLODetector):
     def reparameterize(self, texts: List[List[str]]) -> None:
         # encode text embeddings into the detector
         self.texts = texts
-        self.text_feats, None = self.backbone.forward_text(texts)
+        self.text_feats, _ = self.backbone.forward_text(texts)
 
     def _forward(
             self,
@@ -77,6 +77,7 @@ class YOLOWorldDetector(YOLODetector):
             batch_data_samples: SampleList) -> Tuple[Tuple[Tensor], Tensor]:
         """Extract features."""
         txt_feats = None
+        txt_masks = None
         if batch_data_samples is None:
             texts = self.texts
             txt_feats = self.text_feats
