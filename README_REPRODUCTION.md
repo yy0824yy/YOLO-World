@@ -153,7 +153,49 @@ python make_failure_case_figure.py
 
 ![failure case](failure_cases/failure_case_dense_small_cars.jpg)
 
-## 8. 复现结论
+## 8. 网页交互演示
+
+为了方便录制复现视频，本项目另外补充了一个精简 Gradio 网页：
+
+```bash
+web_reproduce_demo.py
+```
+
+网页支持：
+
+- 上传任意图片；
+- 输入自定义 prompt，支持逗号或换行分隔；
+- 调整置信度阈值和最大检测框数量；
+- 输出带检测框的图片和检测结果表格。
+
+在服务器启动：
+
+```bash
+bash start_web_demo.sh
+```
+
+或手动启动：
+
+```bash
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 CUDA_VISIBLE_DEVICES=0 PYTHONPATH=. \
+/home/algo/anaconda3/envs/yoloworld/bin/python -u web_reproduce_demo.py
+```
+
+如果网页绑定在服务器本地端口 `127.0.0.1:7860`，可以在本机开启 SSH 隧道：
+
+```bash
+ssh -N -L 127.0.0.1:7860:127.0.0.1:7860 -i C:\Users\DELL\.ssh\id_ed25519_codex algo@36.144.20.22
+```
+
+然后在本机浏览器打开：
+
+```text
+http://127.0.0.1:7860
+```
+
+录屏建议：先使用默认 `bus.jpg`，依次测试 `person,bus,car`、`person,bus,wheel,license plate,glasses`、`vehicle,human,window,wheel` 三组 prompt，可以直观看到同一张图片在不同文本提示词下输出不同检测结果。
+
+## 9. 复现结论
 
 本次成功复现了 YOLO-World-v2-S 的开放词汇目标检测推理流程。实验说明：
 
