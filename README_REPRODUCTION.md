@@ -111,7 +111,49 @@ reproduce_runs/run_batch_custom_20260608.log
 
 ![dog result](reproduce_outputs/dog.jpg)
 
-## 6. 复现结论
+## 6. 不同 Prompt 对比实验
+
+为了进一步体现 YOLO-World 的开放词汇检测能力，本次在同一张 `bus.jpg` 上设置了三组不同文本提示词：
+
+| 组别 | Prompt | 主要结果 | 分析 |
+| --- | --- | --- | --- |
+| Prompt A | `person, bus, car` | bus 0.870, person 0.207 | 只检测通用类别，结果集中在公交车和行人 |
+| Prompt B | `person, bus, wheel, license plate, glasses` | bus 0.875, person 0.306, wheel 0.268, glasses 0.253 | 增加细粒度类别后，模型能进一步检测车轮和眼镜 |
+| Prompt C | `vehicle, human, window, wheel` | vehicle 0.647, wheel 0.265, human 0.211 | 使用更抽象的同义/上位词后，模型仍能匹配到车辆和人 |
+
+该实验说明：YOLO-World 的输出会随着 prompt 改变而改变，不需要重新训练模型。Prompt B 中出现的 `glasses` 和 `wheel` 可以作为报告中展示开放词汇能力的重点，但 `glasses` 置信度较低，也说明细粒度目标仍有不稳定性。
+
+运行命令：
+
+```bash
+/home/algo/anaconda3/envs/yoloworld/bin/python -u prompt_comparison_demo.py
+```
+
+输出目录：
+
+```bash
+prompt_comparison_outputs/
+```
+
+推荐报告使用的对比图：
+
+![prompt comparison](prompt_comparison_outputs/bus_prompt_comparison.jpg)
+
+## 7. 失败案例与局限性分析
+
+除了成功案例，本次也保留了一个局限性示例：`reproduce_outputs/demo.jpg` 中远处车辆较小、数量较密，检测框和标签容易重叠，且最高置信度只有约 0.33。这说明在小目标、远距离目标、密集目标场景下，YOLO-World 的开放词汇检测仍然会受到目标尺度和图像分辨率影响。
+
+生成失败案例图的命令：
+
+```bash
+python make_failure_case_figure.py
+```
+
+失败案例图：
+
+![failure case](failure_cases/failure_case_dense_small_cars.jpg)
+
+## 8. 复现结论
 
 本次成功复现了 YOLO-World-v2-S 的开放词汇目标检测推理流程。实验说明：
 
